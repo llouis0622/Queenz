@@ -108,6 +108,7 @@ function installPopupHtml() {
 let installPopupOpen = false;
 function showInstallPopup() {
   if (install.installed) return;
+  if (location.hash.startsWith('#/play')) return; // 게임 화면에서는 방해하지 않음
   try { if (localStorage.getItem(POPUP_KEY) === 'never') return; } catch { /* 무시 */ }
   const card = openModal(installPopupHtml());
   installPopupOpen = true;
