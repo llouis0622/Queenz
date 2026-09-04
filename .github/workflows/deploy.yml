@@ -31,6 +31,8 @@ jobs:
           sed -i "s/__BUILD__/${GITHUB_SHA::10}/" dist/sw.js
           grep -q "${GITHUB_SHA::10}" dist/sw.js
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
