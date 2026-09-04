@@ -1,0 +1,20 @@
+{
+  "name": "Queenz – 둘이서 푸는 Queens 퍼즐",
+  "short_name": "Queenz",
+  "description": "링크드인 Queens 스타일 퍼즐 500단계. 프로필 2개로 함께 진행도를 비교해요.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f7f8",
+  "theme_color": "#f7f7f8",
+  "lang": "ko",
+  "categories": ["games", "puzzle"],
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "./icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

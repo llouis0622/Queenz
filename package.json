@@ -1,0 +1,15 @@
+{
+  "name": "queenz",
+  "version": "1.0.0",
+  "private": true,
+  "description": "둘이서 즐기는 Queens 퍼즐 PWA · 500단계",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "generate": "node scripts/generate.mjs --count 500 --out data/puzzles.json",
+    "validate": "node scripts/validate.mjs data/puzzles.json",
+    "icons": "node scripts/icons.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "license": "MIT"
+}

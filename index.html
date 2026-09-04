@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>Queenz</title>
+  <meta name="description" content="둘이서 즐기는 Queens 퍼즐 · 500단계" />
+  <meta name="theme-color" content="#f7f7f8" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#111114" media="(prefers-color-scheme: dark)" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Queenz" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- 상단 바 -->
+    <header class="topbar">
+      <button class="icon-btn" id="btn-back" aria-label="뒤로" hidden>
+        <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg>
+      </button>
+      <div class="topbar-title" id="topbar-title">Queenz</div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="btn-theme" aria-label="테마 전환">
+          <svg viewBox="0 0 24 24" class="ico-sun"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
+          <svg viewBox="0 0 24 24" class="ico-moon"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>
+        </button>
+        <button class="icon-btn" id="btn-settings" aria-label="설정">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 화면 컨테이너 -->
+    <main id="screen" class="screen"></main>
+
+    <!-- 토스트 -->
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <!-- 모달 -->
+    <div id="modal" class="modal" hidden>
+      <div class="modal-backdrop"></div>
+      <div class="modal-card" role="dialog" aria-modal="true"></div>
+    </div>
+  </div>
+
+  <!-- 퀸 아이콘 심볼 -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="sym-queen" viewBox="0 0 24 24">
+      <path d="M4 18h16l1.5-9.5-4.5 3.5L12 5l-5 7-4.5-3.5L4 18z" fill="currentColor" />
+      <rect x="4" y="19" width="16" height="2.4" rx="1" fill="currentColor" />
+    </symbol>
+  </svg>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
