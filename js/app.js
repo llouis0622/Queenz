@@ -53,11 +53,13 @@ window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   install.prompt = e;
   renderInstallCard();
+  refreshInstallPopup();
 });
 window.addEventListener('appinstalled', () => {
   install.installed = true;
   install.prompt = null;
   renderInstallCard();
+  if (installPopupOpen) { installPopupOpen = false; closeModal(); }
   toast('홈 화면에 설치됐어요! 🎉');
 });
 function installHelpHtml() {
@@ -84,6 +86,42 @@ async function promptInstall() {
   if (outcome !== 'accepted') { install.prompt = ev; toast('나중에 설정에서 다시 설치할 수 있어요'); }
   renderInstallCard();
 }
+/** 앱 진입 시 자동으로 띄우는 설치 팝업 */
+const POPUP_KEY = 'queenz.installPopup';
+function installPopupHtml() {
+  const ready = !!install.prompt;
+  return `
+    <button class="modal-close" id="ip-close" aria-label="닫기">✕</button>
+    <div class="result" style="padding-top:4px">
+      <img src="./icons/icon.svg" alt="" width="72" height="72" style="border-radius:20px;box-shadow:var(--shadow)" />
+      <h3 style="margin-top:12px">Queenz를 홈 화면에 설치할까요?</h3>
+      <p class="muted" style="margin:6px 0 14px;line-height:1.7">${ready
+        ? '앱처럼 전체 화면으로 실행되고, 오프라인에서도 플레이할 수 있어요.'
+        : installHelpHtml() + '<br /><span style="font-size:12px">설치하면 앱처럼 전체 화면으로 실행되고 오프라인에서도 플레이할 수 있어요.</span>'}</p>
+      <div class="actions">
+        ${ready ? '<button class="btn primary" id="ip-install">홈 화면에 설치</button>' : ''}
+        <button class="btn" id="ip-later">${ready ? '나중에' : '닫기'}</button>
+        <button class="btn small" style="background:none;color:var(--fg-muted)" id="ip-never">다시 보지 않기</button>
+      </div>
+    </div>`;
+}
+let installPopupOpen = false;
+function showInstallPopup() {
+  if (install.installed) return;
+  try { if (localStorage.getItem(POPUP_KEY) === 'never') return; } catch { /* 무시 */ }
+  const card = openModal(installPopupHtml());
+  installPopupOpen = true;
+  const close = () => { installPopupOpen = false; closeModal(); };
+  $('.modal-backdrop', modalEl).onclick = close;
+  $('#ip-close', card).addEventListener('click', close);
+  $('#ip-later', card).addEventListener('click', close);
+  $('#ip-never', card).addEventListener('click', () => { try { localStorage.setItem(POPUP_KEY, 'never'); } catch { /* 무시 */ } close(); toast('설정에서 언제든 설치할 수 있어요'); });
+  $('#ip-install', card)?.addEventListener('click', async () => { close(); await promptInstall(); });
+}
+function refreshInstallPopup() {
+  if (installPopupOpen && !modalEl.hidden) { installPopupOpen = false; showInstallPopup(); }
+}
+
 /** 홈 화면의 설치 카드: 설치 가능하고 아직 설치 전일 때만 표시 */
 function renderInstallCard() {
   const el = $('#install-card');
@@ -545,6 +583,10 @@ $('#btn-settings').addEventListener('click', () => {
       <div class="label">홈 화면에 설치<small>${install.installed ? '설치되어 앱으로 실행 중이에요' : '앱처럼 실행 · 오프라인 플레이 · 전체 화면'}</small></div>
       <button class="btn small ${install.installed ? '' : 'primary'}" id="st-install" ${install.installed ? 'disabled' : ''}>${install.installed ? '설치됨 ✓' : '설치'}</button>
     </div>
+    ${install.installed ? '' : `<div class="setting">
+      <div class="label">앱 시작 시 설치 팝업<small>들어오자마자 설치 안내를 띄워요</small></div>
+      <button class="switch ${localStorage.getItem(POPUP_KEY) === 'never' ? '' : 'on'}" id="st-popup" aria-label="설치 팝업"></button>
+    </div>`}
     <p class="muted" style="font-size:12px;margin:12px 0 0">Queenz · ${LEVELS.length}단계 · 오프라인에서도 동작해요</p>
     <button class="btn block" style="margin-top:12px" id="st-close">닫기</button>
   `);
@@ -566,6 +608,10 @@ $('#btn-settings').addEventListener('click', () => {
     buzz(20);
   });
   $('#st-install', card)?.addEventListener('click', promptInstall);
+  $('#st-popup', card)?.addEventListener('click', (e) => {
+    const off = e.currentTarget.classList.toggle('on') === false;
+    try { if (off) localStorage.setItem(POPUP_KEY, 'never'); else localStorage.removeItem(POPUP_KEY); } catch { /* 무시 */ }
+  });
   $('#st-close', card).addEventListener('click', closeModal);
 });
 
@@ -574,17 +620,18 @@ async function registerSW() {
   if (!('serviceWorker' in navigator)) return;
   try {
     const reg = await navigator.serviceWorker.register('./sw.js');
-    reg.addEventListener('updatefound', () => {
-      const w = reg.installing;
-      if (!w) return;
-      w.addEventListener('statechange', () => {
-        if (w.state === 'installed' && navigator.serviceWorker.controller) {
-          toast('새 버전이 있어요 · 눌러서 업데이트', { ms: 0, onClick: () => w.postMessage({ type: 'SKIP_WAITING' }) });
-        }
-      });
-    });
+    // 앱을 다시 열 때마다 새 버전 확인
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+    // 새 워커가 제어권을 잡으면 자동 새로고침 (게임 중이면 게임을 나갈 때 적용)
     let reloaded = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => { if (!reloaded) { reloaded = true; location.reload(); } });
+    const applyUpdate = () => { if (reloaded) return; reloaded = true; location.reload(); };
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!navigator.serviceWorker.controller) return;
+      if (location.hash.startsWith('#/play')) {
+        toast('새 버전이 준비됐어요 · 이 단계를 나가면 적용돼요', { ms: 2500 });
+        window.addEventListener('hashchange', applyUpdate, { once: true });
+      } else applyUpdate();
+    });
   } catch (e) { console.warn('SW 등록 실패', e); }
 }
 
@@ -600,5 +647,7 @@ async function boot() {
   }
   route();
   registerSW();
+  // 앱 진입 직후 설치 팝업 (설치 전 + 다시 보지 않기 아님)
+  setTimeout(showInstallPopup, 600);
 }
 boot();
