@@ -43,6 +43,54 @@ function toast(msg, { danger = false, ms = 1800, onClick = null } = {}) {
   if (ms > 0) toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
 }
 
+// ---------- PWA 설치 ----------
+const install = { prompt: null, installed: false };
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+}
+install.installed = isStandalone();
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  install.prompt = e;
+  renderInstallCard();
+});
+window.addEventListener('appinstalled', () => {
+  install.installed = true;
+  install.prompt = null;
+  renderInstallCard();
+  toast('홈 화면에 설치됐어요! 🎉');
+});
+function installHelpHtml() {
+  const ua = navigator.userAgent;
+  const ios = /iPhone|iPad|iPod/i.test(ua);
+  if (ios) return '아이폰은 <b>Safari</b>에서 공유 버튼(⬆︎) → <b>홈 화면에 추가</b>를 눌러 주세요.';
+  return '크롬 메뉴(⋮) → <b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 눌러 주세요. 삼성 인터넷은 메뉴 → <b>현재 페이지 추가</b> → <b>홈 화면</b>이에요.';
+}
+async function promptInstall() {
+  if (install.installed) { toast('이미 홈 화면에 설치되어 있어요'); return; }
+  if (!install.prompt) {
+    openModal(`
+      <h3>홈 화면에 설치</h3>
+      <p class="muted" style="margin:0 0 12px;line-height:1.7">이 브라우저에서는 설치 버튼을 바로 띄울 수 없어요.<br />${installHelpHtml()}</p>
+      <p class="muted" style="font-size:12px;margin:0 0 12px">설치하면 전체 화면 앱처럼 실행되고, 오프라인에서도 동작해요.</p>
+      <button class="btn block" id="ih-close">닫기</button>`);
+    $('#ih-close').addEventListener('click', closeModal);
+    return;
+  }
+  const ev = install.prompt;
+  install.prompt = null;
+  ev.prompt();
+  const { outcome } = await ev.userChoice;
+  if (outcome !== 'accepted') { install.prompt = ev; toast('나중에 설정에서 다시 설치할 수 있어요'); }
+  renderInstallCard();
+}
+/** 홈 화면의 설치 카드: 설치 가능하고 아직 설치 전일 때만 표시 */
+function renderInstallCard() {
+  const el = $('#install-card');
+  if (!el) return;
+  el.hidden = install.installed || !install.prompt;
+}
+
 // ---------- 테마 ----------
 const mq = window.matchMedia('(prefers-color-scheme: dark)');
 function applyTheme() {
@@ -111,6 +159,11 @@ function renderHome() {
       <h1>Queenz</h1>
       <p>둘이서 함께하는 Queens 퍼즐 · ${total}단계</p>
     </div>
+    <div class="card install-card row" id="install-card" hidden>
+      <img src="./icons/icon.svg" alt="" width="40" height="40" style="border-radius:12px" />
+      <div class="grow"><b>홈 화면에 설치</b><div class="muted" style="font-size:13px">앱처럼 실행하고 오프라인에서도 플레이</div></div>
+      <button class="btn small primary" id="btn-install-home">설치</button>
+    </div>
     <div class="profiles">
       ${store.state.profiles.map((p, i) => `
         <button class="profile ${i === active ? 'active' : ''}" data-profile="${i}">
@@ -158,6 +211,8 @@ function renderHome() {
     });
   }
   $('#btn-continue').addEventListener('click', () => go(`/play/${allDone ? 1 : me.next}`));
+  $('#btn-install-home').addEventListener('click', promptInstall);
+  renderInstallCard();
   $('#btn-levels').addEventListener('click', () => go('/levels'));
 
   function cmpRow(label, vals, mode, suffix = '', f = (x) => x) {
@@ -486,6 +541,10 @@ $('#btn-settings').addEventListener('click', () => {
       <div class="label">진동<small>퀸 배치·실수 시 짧은 진동</small></div>
       <button class="switch ${s.haptics ? 'on' : ''}" id="st-haptics" aria-label="진동"></button>
     </div>
+    <div class="setting">
+      <div class="label">홈 화면에 설치<small>${install.installed ? '설치되어 앱으로 실행 중이에요' : '앱처럼 실행 · 오프라인 플레이 · 전체 화면'}</small></div>
+      <button class="btn small ${install.installed ? '' : 'primary'}" id="st-install" ${install.installed ? 'disabled' : ''}>${install.installed ? '설치됨 ✓' : '설치'}</button>
+    </div>
     <p class="muted" style="font-size:12px;margin:12px 0 0">Queenz · ${LEVELS.length}단계 · 오프라인에서도 동작해요</p>
     <button class="btn block" style="margin-top:12px" id="st-close">닫기</button>
   `);
@@ -506,6 +565,7 @@ $('#btn-settings').addEventListener('click', () => {
     e.currentTarget.classList.toggle('on', store.settings.haptics);
     buzz(20);
   });
+  $('#st-install', card)?.addEventListener('click', promptInstall);
   $('#st-close', card).addEventListener('click', closeModal);
 });
 

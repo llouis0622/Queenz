@@ -113,6 +113,7 @@ h2 { font-size: 15px; color: var(--fg-muted); font-weight: 600; margin-bottom: 1
 .btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ===== 홈 ===== */
+.install-card { margin-top: 4px; padding: 12px 14px; border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
 .hero { text-align: center; padding: 18px 0 10px; }
 .hero .logo { width: 72px; height: 72px; border-radius: 22px; margin: 0 auto 10px; box-shadow: var(--shadow); }
 .hero h1 { font-size: 28px; }
